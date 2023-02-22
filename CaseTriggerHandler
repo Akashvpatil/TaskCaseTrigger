@@ -1,0 +1,25 @@
+public class caseTriggerHandler {
+    public static void checkStatus(Map<Id,Case> newmap,Map<Id,Case> oldMap){
+        List<Id> idList=new List<Id>();
+        //filter for the cases status changing to closed
+        for(Case caseObj:newMap.Values()){
+            if(newMap.get(caseObj.Id).status!=oldMap.get(caseObj.Id).status && newMap.get(caseObj.Id).status=='Closed'){
+                idList.add(caseObj.Id);
+            }
+        }
+        //fetching child records
+        List<Case> caseList=[select Id,status,parentId from case where parentId In:idList and status!='closed'];
+        List<Id> parentIdList=new List<Id>();
+        //getting Id of records having the child status not closed
+        for(Case caseObj:caseList){
+            parentIdList.add(caseObj.ParentId);
+        }
+        //Adding error for the Records
+        for(Id caseId:IdList){
+            if(parentIdList.contains(caseId)){
+                newMap.get(caseId).addError('Cannot change status of case its child cases are not closed yet');
+            }
+        }
+        
+    }
+}
