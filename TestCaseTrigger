@@ -1,0 +1,96 @@
+@isTest
+public class testCaseTrigger {
+   @Testsetup
+    public static void setup(){
+        List<Case> caseList=new List <Case>();
+        for(Integer i=0;i<20;i++){
+            case caseObj=new case();
+            caseObj.SuppliedName='Test'+i;
+            caseObj.status='Working';
+            caseObj.Origin='Web';
+            caseList.add(caseObj);
+        }
+        insert caseList;
+        List<Case> childList=new List<Case>();
+        integer i=0;
+        List<Case> ParentList=[select Id from case where Origin='Web'];
+        for(Case parentCase:ParentList){
+            case caseObj=new Case();
+            caseObj.SuppliedName='child'+ i++;
+            caseObj.status='new';
+            caseObj.Origin='Web';
+            caseObj.ParentId=parentCase.Id;
+            childList.add(caseObj);
+        }
+        insert childList;
+        
+    }
+    
+    @isTest public static void positiveTestCase(){
+        List<Case> lstCase=[select status,Id from case where SuppliedName like 'Test%'];
+        List<Case> toUpdateCase=new List<case>();
+        for(case caseObj : lstCase){
+            Case newcase=new Case();
+            newCase=caseObj.clone();
+            newcase.Id=caseObj.Id;
+            newcase.Status='Closed';
+            toUpdateCase.add(newCase);
+        }
+        test.startTest();
+        Database.SaveResult[] results=database.update(toUpdateCase,false);
+        test.stopTest();
+        System.assertEquals(0,[select count() from case where Status='Closed']);
+        for(Database.SaveResult resultSet:results){
+            if(resultSet.isSuccess()){
+            }
+            else{
+                    for(Database.Error err:resultSet.getErrors()){
+                        System.debug('Error occured while inserting the data:--'+err.getMessage());
+                        System.assertEquals('Cannot change status of case its child cases are not closed yet', err.getMessage());
+                    }
+                }
+                
+        }
+        
+    }
+    @isTest public static void negativeTestCase(){
+        List<Case> caseList=new List <Case>();
+        for(Integer i=0;i<20;i++){
+            case caseObj=new case();
+            caseObj.SuppliedName='negative'+i;
+            caseObj.status='Working';
+            caseObj.Origin='Web';
+            caseList.add(caseObj);
+        }
+        insert caseList;
+        
+        List<Case> childList=new List<Case>();
+        integer i=0;
+        List<Case> ParentList=[select Id from case where Origin='Web'];
+        for(Case parentCase:ParentList){
+            case caseObj=new Case();
+            caseObj.SuppliedName='childNegative'+ i++;
+            caseObj.status='Closed';
+            caseObj.Origin='Web';
+            caseObj.ParentId=parentCase.Id;
+            childList.add(caseObj);
+       
+          }
+         insert childList;
+         List<Case> lstCase=[select status,Id from case where SuppliedName like 'negative%'];
+        List<Case> toUpdateCase=new List<case>();
+        for(case caseObj : lstCase){
+            Case newcase=new Case();
+            newCase=caseObj.clone();
+            newcase.Id=caseObj.Id;
+            newcase.Status='Closed';
+            toUpdateCase.add(newCase);
+        }
+        Test.startTest();
+        Update toUpdateCase;
+        Test.stopTest();
+        System.assertEquals(20,[select count() from case where SuppliedName like 'negative%' and status='Closed']);
+        
+    }
+    
+}
