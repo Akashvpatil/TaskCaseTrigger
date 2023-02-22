@@ -1,0 +1,7 @@
+trigger CaseTrigger on Case (before update) {
+    if(trigger.isbefore && Trigger.isUpdate){
+       
+        caseTriggerHandler.checkStatus(Trigger.newMap,Trigger.oldMap);
+        
+    }   
+}
